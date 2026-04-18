@@ -10,6 +10,10 @@ import WordCounter from "./pages/tools/WordCounter.tsx";
 import JsonFormatter from "./pages/tools/JsonFormatter.tsx";
 import TextSummarizer from "./pages/tools/TextSummarizer.tsx";
 import ImageCompressor from "./pages/tools/ImageCompressor.tsx";
+import WordToPdf from "./pages/tools/WordToPdf.tsx";
+import FileToQr from "./pages/tools/FileToQr.tsx";
+import FileToLink from "./pages/tools/FileToLink.tsx";
+import QrScanner from "./pages/tools/QrScanner.tsx";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +30,10 @@ const App = () => (
             <Route path="/tools/json-formatter" element={<JsonFormatter />} />
             <Route path="/tools/text-summarizer" element={<TextSummarizer />} />
             <Route path="/tools/image-compressor" element={<ImageCompressor />} />
+            <Route path="/tools/word-to-pdf" element={<WordToPdf />} />
+            <Route path="/tools/file-to-qr" element={<FileToQr />} />
+            <Route path="/tools/file-to-link" element={<FileToLink />} />
+            <Route path="/tools/qr-scanner" element={<QrScanner />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
