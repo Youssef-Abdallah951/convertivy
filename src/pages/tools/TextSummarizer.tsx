@@ -16,8 +16,8 @@ const TextSummarizer = () => {
   const [loading, setLoading] = useState(false);
 
   const summarize = async () => {
-    if (text.trim().length < 30) {
-      toast.error("Please enter at least 30 characters to summarize.");
+    if (text.trim().length < 5) {
+      toast.error("Please enter at least 5 characters to summarize.");
       return;
     }
     setLoading(true);
