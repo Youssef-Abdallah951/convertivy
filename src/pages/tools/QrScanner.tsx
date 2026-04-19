@@ -14,6 +14,7 @@ const QrScanner = () => {
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const decodedRef = useRef(false);
 
   const stop = async () => {
     const s = scannerRef.current;
@@ -31,7 +32,19 @@ const QrScanner = () => {
 
   const start = async () => {
     setResult(null);
+    decodedRef.current = false;
     setScanning(true);
+
+    // Wait for the scanner region to be in the DOM
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+    const el = document.getElementById(ELEMENT_ID);
+    if (!el) {
+      toast.error("Scanner not ready. Please try again.");
+      setScanning(false);
+      return;
+    }
+
     try {
       const scanner = new Html5Qrcode(ELEMENT_ID);
       scannerRef.current = scanner;
@@ -39,17 +52,28 @@ const QrScanner = () => {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 240, height: 240 } },
         (decoded) => {
+          if (decodedRef.current) return;
+          decodedRef.current = true;
           setResult(decoded);
-          stop();
           toast.success("QR code decoded");
+          // Defer stop so we don't tear down mid-callback
+          setTimeout(() => {
+            stop();
+          }, 0);
         },
         () => {
           // ignore decode errors per frame
         },
       );
     } catch (e: any) {
-      console.error(e);
-      toast.error(e?.message || "Could not access camera. Check permissions.");
+      console.error("QR scanner error:", e);
+      const msg =
+        typeof e === "string"
+          ? e
+          : e?.message ||
+            "Could not access camera. Please grant camera permission and use HTTPS.";
+      toast.error(msg);
+      scannerRef.current = null;
       setScanning(false);
     }
   };
@@ -58,6 +82,7 @@ const QrScanner = () => {
     return () => {
       stop();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const copy = async () => {
