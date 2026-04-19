@@ -14,9 +14,9 @@ Deno.serve(async (req) => {
   try {
     const { text } = await req.json();
 
-    if (!text || typeof text !== "string" || text.trim().length < 5) {
+    if (!text || typeof text !== "string" || text.trim().length < 1) {
       return new Response(
-        JSON.stringify({ error: "Please provide at least 5 characters of text." }),
+        JSON.stringify({ error: "Please provide at least 1 character of text." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
