@@ -7,6 +7,7 @@ import {
   QrCode,
   Link2,
   ScanLine,
+  Download,
   type LucideIcon,
 } from "lucide-react";
 
@@ -75,6 +76,14 @@ export const tools: Tool[] = [
     icon: Link2,
     category: "Files",
     keywords: ["share", "link", "upload", "url", "file"],
+  },
+  {
+    slug: "link-to-file",
+    title: "Link to File",
+    description: "Paste a URL and download the file directly to your device.",
+    icon: Download,
+    category: "Files",
+    keywords: ["link", "url", "download", "file", "fetch"],
   },
   {
     slug: "qr-scanner",

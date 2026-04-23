@@ -2,3 +2,6 @@ project_id = "xgsxnnxjyqpyirqwkmix"
 
 [functions.summarize-text]
 verify_jwt = false
+
+[functions.fetch-url-file]
+verify_jwt = false
