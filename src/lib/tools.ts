@@ -8,6 +8,7 @@ import {
   Link2,
   ScanLine,
   Download,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 
@@ -92,5 +93,13 @@ export const tools: Tool[] = [
     icon: ScanLine,
     category: "QR",
     keywords: ["qr", "scan", "camera", "decode", "reader"],
+  },
+  {
+    slug: "video-downloader",
+    title: "Video to Media Downloader",
+    description: "Paste a video link and download it as MP4 video or MP3 audio.",
+    icon: Video,
+    category: "Media",
+    keywords: ["video", "download", "youtube", "facebook", "instagram", "tiktok", "mp3", "mp4"],
   },
 ];

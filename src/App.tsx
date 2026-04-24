@@ -15,6 +15,7 @@ import FileToQr from "./pages/tools/FileToQr.tsx";
 import FileToLink from "./pages/tools/FileToLink.tsx";
 import LinkToFile from "./pages/tools/LinkToFile.tsx";
 import QrScanner from "./pages/tools/QrScanner.tsx";
+import VideoDownloader from "./pages/tools/VideoDownloader.tsx";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/tools/file-to-link" element={<FileToLink />} />
             <Route path="/tools/link-to-file" element={<LinkToFile />} />
             <Route path="/tools/qr-scanner" element={<QrScanner />} />
+            <Route path="/tools/video-downloader" element={<VideoDownloader />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

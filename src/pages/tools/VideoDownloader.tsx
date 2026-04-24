@@ -107,7 +107,6 @@ const VideoDownloader = () => {
         title={tool.title}
         description={tool.description}
         icon={tool.icon}
-        category={tool.category}
       />
 
       <div className="mx-auto max-w-3xl space-y-6">
