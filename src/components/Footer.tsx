@@ -7,10 +7,10 @@ export function Footer() {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Sparkles className="h-4 w-4 text-primary" />
           <span>
-            <span className="font-semibold text-foreground">SmartTools</span> — Built for students & developers.
+            <span className="font-semibold text-foreground">Convertify</span> — Built for students & developers.
           </span>
         </div>
-        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} SmartTools. All rights reserved.</p>
+        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Convertify. All rights reserved.</p>
       </div>
     </footer>
   );

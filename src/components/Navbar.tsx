@@ -11,7 +11,7 @@ export function Navbar() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary shadow-glow">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </span>
-          <span className="text-gradient">SmartTools</span>
+          <span className="text-gradient">Convertify</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
