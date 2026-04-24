@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.fetch-url-file]
 verify_jwt = false
+
+[functions.generate-code]
+verify_jwt = false

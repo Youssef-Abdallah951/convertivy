@@ -7,6 +7,7 @@ import {
   QrCode,
   Link2,
   Download,
+  Code2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -83,5 +84,13 @@ export const tools: Tool[] = [
     icon: Download,
     category: "Files",
     keywords: ["link", "url", "download", "file", "fetch"],
+  },
+  {
+    slug: "code-generator",
+    title: "AI Code Generator",
+    description: "Describe what you want and get clean, working code in your favorite language.",
+    icon: Code2,
+    category: "AI",
+    keywords: ["code", "generator", "ai", "developer", "html", "css", "javascript", "python", "java", "cpp"],
   },
 ];
