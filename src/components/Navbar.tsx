@@ -19,7 +19,6 @@ export function Navbar() {
             { to: "/", label: "Home" },
             { to: "/tools/text-summarizer", label: "AI Summarizer" },
             { to: "/tools/file-to-qr", label: "File → QR" },
-            { to: "/tools/qr-scanner", label: "Scan QR" },
           ].map((l) => (
             <NavLink
               key={l.to}

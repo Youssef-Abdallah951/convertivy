@@ -6,7 +6,6 @@ import {
   FileType2,
   QrCode,
   Link2,
-  ScanLine,
   Download,
   type LucideIcon,
 } from "lucide-react";
@@ -84,13 +83,5 @@ export const tools: Tool[] = [
     icon: Download,
     category: "Files",
     keywords: ["link", "url", "download", "file", "fetch"],
-  },
-  {
-    slug: "qr-scanner",
-    title: "QR Code Scanner",
-    description: "Scan QR codes with your camera and decode them instantly.",
-    icon: ScanLine,
-    category: "QR",
-    keywords: ["qr", "scan", "camera", "decode", "reader"],
   },
 ];
