@@ -84,6 +84,7 @@ export const tools: Tool[] = [
     icon: Code2,
     category: "AI",
     keywords: ["code", "generator", "ai", "developer", "html", "css", "javascript", "python", "java", "cpp"],
+  },
   {
     slug: "unit-converter",
     title: "Unit Converter",
