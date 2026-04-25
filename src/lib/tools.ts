@@ -7,6 +7,7 @@ import {
   Link2,
   Download,
   Code2,
+  Ruler,
   type LucideIcon,
 } from "lucide-react";
 
@@ -15,7 +16,7 @@ export type Tool = {
   title: string;
   description: string;
   icon: LucideIcon;
-  category: "Text" | "Developer" | "AI" | "Media" | "Files" | "QR";
+  category: "Text" | "Developer" | "AI" | "Media" | "Files" | "QR" | "Utilities";
   keywords: string[];
 };
 
@@ -83,5 +84,12 @@ export const tools: Tool[] = [
     icon: Code2,
     category: "AI",
     keywords: ["code", "generator", "ai", "developer", "html", "css", "javascript", "python", "java", "cpp"],
+  {
+    slug: "unit-converter",
+    title: "Unit Converter",
+    description: "Convert between length, weight, temperature, time, speed, and data units instantly.",
+    icon: Ruler,
+    category: "Utilities",
+    keywords: ["unit", "converter", "length", "weight", "temperature", "time", "speed", "data", "measurement"],
   },
 ];
