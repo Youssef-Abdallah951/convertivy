@@ -8,6 +8,7 @@ import {
   Download,
   Code2,
   Ruler,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 
