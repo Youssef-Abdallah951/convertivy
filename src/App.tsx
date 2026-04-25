@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import WordCounter from "./pages/tools/WordCounter.tsx";
+
 import JsonFormatter from "./pages/tools/JsonFormatter.tsx";
 import TextSummarizer from "./pages/tools/TextSummarizer.tsx";
 import ImageCompressor from "./pages/tools/ImageCompressor.tsx";
@@ -27,7 +27,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/tools/word-counter" element={<WordCounter />} />
+            
             <Route path="/tools/json-formatter" element={<JsonFormatter />} />
             <Route path="/tools/text-summarizer" element={<TextSummarizer />} />
             <Route path="/tools/image-compressor" element={<ImageCompressor />} />

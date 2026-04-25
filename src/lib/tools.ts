@@ -22,14 +22,6 @@ export type Tool = {
 
 export const tools: Tool[] = [
   {
-    slug: "word-counter",
-    title: "Word Counter",
-    description: "Count words, characters, and sentences in real-time as you type.",
-    icon: FileText,
-    category: "Text",
-    keywords: ["word", "count", "characters", "sentences", "text", "essay"],
-  },
-  {
     slug: "json-formatter",
     title: "JSON Formatter",
     description: "Beautify, validate, and minify JSON with helpful error messages.",
