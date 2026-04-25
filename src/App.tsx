@@ -16,7 +16,6 @@ import FileToLink from "./pages/tools/FileToLink.tsx";
 import LinkToFile from "./pages/tools/LinkToFile.tsx";
 import CodeGenerator from "./pages/tools/CodeGenerator.tsx";
 import UnitConverter from "./pages/tools/UnitConverter.tsx";
-import PhotoLocation from "./pages/tools/PhotoLocation.tsx";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +38,6 @@ const App = () => (
             <Route path="/tools/link-to-file" element={<LinkToFile />} />
             <Route path="/tools/code-generator" element={<CodeGenerator />} />
             <Route path="/tools/unit-converter" element={<UnitConverter />} />
-            <Route path="/tools/photo-location" element={<PhotoLocation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

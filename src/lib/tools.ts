@@ -8,7 +8,6 @@ import {
   Download,
   Code2,
   Ruler,
-  MapPin,
   type LucideIcon,
 } from "lucide-react";
 
@@ -93,13 +92,5 @@ export const tools: Tool[] = [
     icon: Ruler,
     category: "Utilities",
     keywords: ["unit", "converter", "length", "weight", "temperature", "time", "speed", "data", "measurement"],
-  },
-  {
-    slug: "photo-location",
-    title: "Find Photo Location",
-    description: "Upload a photo and reveal where it was taken from its EXIF GPS metadata.",
-    icon: MapPin,
-    category: "Utilities",
-    keywords: ["photo", "location", "exif", "gps", "metadata", "map", "image"],
   },
 ];
