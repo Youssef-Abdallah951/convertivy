@@ -39,6 +39,7 @@ const App = () => (
             <Route path="/tools/link-to-file" element={<LinkToFile />} />
             <Route path="/tools/code-generator" element={<CodeGenerator />} />
             <Route path="/tools/unit-converter" element={<UnitConverter />} />
+            <Route path="/tools/photo-location" element={<PhotoLocation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
