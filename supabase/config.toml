@@ -8,6 +8,3 @@ verify_jwt = false
 
 [functions.generate-code]
 verify_jwt = false
-
-[functions.solve-problem]
-verify_jwt = false

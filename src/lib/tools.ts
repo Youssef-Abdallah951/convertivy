@@ -8,7 +8,6 @@ import {
   Download,
   Code2,
   Ruler,
-  Brain,
   type LucideIcon,
 } from "lucide-react";
 
@@ -93,13 +92,5 @@ export const tools: Tool[] = [
     icon: Ruler,
     category: "Utilities",
     keywords: ["unit", "converter", "length", "weight", "temperature", "time", "speed", "data", "measurement"],
-  },
-  {
-    slug: "problem-solver",
-    title: "Problem Solver Assistant",
-    description: "Get step-by-step AI solutions for math, physics, logic, and word problems.",
-    icon: Brain,
-    category: "AI",
-    keywords: ["problem", "solver", "math", "physics", "logic", "tutor", "ai", "homework", "reasoning", "steps"],
   },
 ];
