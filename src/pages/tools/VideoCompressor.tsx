@@ -130,7 +130,9 @@ const VideoCompressor = () => {
 
       setStage("Finalizing...");
       const data = await ffmpeg.readFile(outName);
-      const blob = new Blob([data as Uint8Array], {
+      const bytes = data as Uint8Array;
+      const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+      const blob = new Blob([buf], {
         type: format === "mp4" ? "video/mp4" : "video/webm",
       });
       setOutputUrl(URL.createObjectURL(blob));
