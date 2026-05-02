@@ -1,75 +1,101 @@
-import { useRef, useState } from "react";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
-import { Upload, Download, Loader2, Video as VideoIcon, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Upload,
+  Download,
+  Loader2,
+  Video as VideoIcon,
+  Trash2,
+  Settings as SettingsIcon,
+  ExternalLink,
+} from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { ToolPageHeader } from "@/components/ToolPageHeader";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { tools } from "@/lib/tools";
 
 const tool = tools.find((t) => t.slug === "video-compressor")!;
 
 const MAX_SIZE_MB = 100;
+const STORAGE_KEY = "convertify.cloudinary.config";
+const LAST_UPLOAD_KEY = "convertify.cloudinary.lastUpload";
 
-type Level = "low" | "medium" | "high";
-type Resolution = "original" | "720" | "480";
-type Format = "mp4" | "webm";
+type CloudinaryConfig = { cloudName: string; uploadPreset: string };
 
-const CRF: Record<Level, string> = {
-  low: "23",
-  medium: "28",
-  high: "34",
+type UploadResult = {
+  secure_url: string;
+  bytes: number;
+  format: string;
+  public_id: string;
+  original_filename?: string;
 };
 
 function formatBytes(bytes: number) {
+  if (!bytes) return "0 B";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+function loadConfig(): CloudinaryConfig {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { cloudName: "", uploadPreset: "" };
+    return { cloudName: "", uploadPreset: "", ...JSON.parse(raw) };
+  } catch {
+    return { cloudName: "", uploadPreset: "" };
+  }
+}
+
 const VideoCompressor = () => {
   const [file, setFile] = useState<File | null>(null);
   const [originalUrl, setOriginalUrl] = useState<string | null>(null);
-  const [outputUrl, setOutputUrl] = useState<string | null>(null);
-  const [outputSize, setOutputSize] = useState<number>(0);
-  const [outputName, setOutputName] = useState<string>("compressed.mp4");
-  const [level, setLevel] = useState<Level>("medium");
-  const [resolution, setResolution] = useState<Resolution>("original");
-  const [format, setFormat] = useState<Format>("mp4");
+  const [result, setResult] = useState<UploadResult | null>(null);
+  const [optimizedUrl, setOptimizedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState<string>("");
-  const ffmpegRef = useRef<FFmpeg | null>(null);
+  const [config, setConfig] = useState<CloudinaryConfig>(() => loadConfig());
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tempConfig, setTempConfig] = useState<CloudinaryConfig>(config);
   const inputRef = useRef<HTMLInputElement>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
-  const loadFFmpeg = async () => {
-    if (ffmpegRef.current) return ffmpegRef.current;
-    const ffmpeg = new FFmpeg();
-    const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-    setStage("Loading compressor (first time may take a moment)...");
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-    });
-    ffmpeg.on("progress", ({ progress }) => {
-      setProgress(Math.min(99, Math.round(progress * 100)));
-    });
-    ffmpegRef.current = ffmpeg;
-    return ffmpeg;
-  };
+  useEffect(() => {
+    if (!config.cloudName || !config.uploadPreset) {
+      setSettingsOpen(true);
+    }
+    try {
+      const lastRaw = localStorage.getItem(LAST_UPLOAD_KEY);
+      if (lastRaw) {
+        const last = JSON.parse(lastRaw) as UploadResult;
+        setResult(last);
+        setOptimizedUrl(buildOptimizedUrl(last.secure_url));
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function buildOptimizedUrl(secureUrl: string) {
+    // Inject q_auto,f_auto transformation after /upload/
+    return secureUrl.replace("/upload/", "/upload/q_auto,f_auto/");
+  }
 
   const handleFile = (f: File) => {
     if (!f.type.startsWith("video/")) {
-      toast.error("Please select a valid video file.");
+      toast.error("Please select a valid video file (mp4, mov, webm).");
       return;
     }
     if (f.size > MAX_SIZE_MB * 1024 * 1024) {
@@ -78,8 +104,9 @@ const VideoCompressor = () => {
     }
     setFile(f);
     setOriginalUrl(URL.createObjectURL(f));
-    setOutputUrl(null);
-    setOutputSize(0);
+    setResult(null);
+    setOptimizedUrl(null);
+    setProgress(0);
   };
 
   const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -90,67 +117,96 @@ const VideoCompressor = () => {
 
   const compress = async () => {
     if (!file) return;
+    if (!config.cloudName || !config.uploadPreset) {
+      toast.error("Please configure your Cloudinary settings first.");
+      setSettingsOpen(true);
+      return;
+    }
+
     setLoading(true);
     setProgress(0);
-    setOutputUrl(null);
+    setStage("Uploading to Cloudinary...");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", config.uploadPreset);
+
+    const url = `https://api.cloudinary.com/v1_1/${encodeURIComponent(
+      config.cloudName,
+    )}/video/upload`;
+
     try {
-      const ffmpeg = await loadFFmpeg();
-      const inputName = `input_${Date.now()}`;
-      const outName = `output.${format}`;
-      setStage("Reading file...");
-      await ffmpeg.writeFile(inputName, await fetchFile(file));
-
-      const args: string[] = ["-i", inputName];
-
-      if (resolution !== "original") {
-        args.push("-vf", `scale=-2:${resolution}`);
-      }
-
-      if (format === "mp4") {
-        args.push(
-          "-c:v", "libx264",
-          "-preset", "veryfast",
-          "-crf", CRF[level],
-          "-c:a", "aac",
-          "-b:a", "128k",
-        );
-      } else {
-        // webm
-        args.push(
-          "-c:v", "libvpx",
-          "-b:v", level === "low" ? "1M" : level === "medium" ? "600k" : "300k",
-          "-c:a", "libvorbis",
-        );
-      }
-
-      args.push(outName);
-
-      setStage("Compressing video...");
-      await ffmpeg.exec(args);
-
-      setStage("Finalizing...");
-      const data = await ffmpeg.readFile(outName);
-      const bytes = data as Uint8Array;
-      const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-      const blob = new Blob([buf], {
-        type: format === "mp4" ? "video/mp4" : "video/webm",
+      const data = await new Promise<UploadResult>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhrRef.current = xhr;
+        xhr.open("POST", url);
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) {
+            setProgress(Math.round((ev.loaded / ev.total) * 95));
+          }
+        };
+        xhr.onload = () => {
+          try {
+            const json = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(json);
+            } else {
+              reject(new Error(json?.error?.message || `Upload failed (${xhr.status})`));
+            }
+          } catch {
+            reject(new Error(`Upload failed (${xhr.status})`));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.onabort = () => reject(new Error("Upload cancelled"));
+        xhr.send(formData);
       });
-      setOutputUrl(URL.createObjectURL(blob));
-      setOutputSize(blob.size);
-      const baseName = file.name.replace(/\.[^.]+$/, "");
-      setOutputName(`${baseName}-compressed.${format}`);
-      setProgress(100);
-      toast.success("Video compressed successfully");
 
+      setStage("Optimizing...");
+      setProgress(100);
+      setResult(data);
+      const opt = buildOptimizedUrl(data.secure_url);
+      setOptimizedUrl(opt);
       try {
-        await ffmpeg.deleteFile(inputName);
-        await ffmpeg.deleteFile(outName);
+        localStorage.setItem(LAST_UPLOAD_KEY, JSON.stringify(data));
       } catch {}
+      toast.success("Video uploaded and optimized");
     } catch (e) {
+      const msg = e instanceof Error ? e.message : "Upload failed";
       console.error(e);
-      toast.error("Failed to compress video. Try a smaller file or different settings.");
+      toast.error(msg);
     } finally {
       setLoading(false);
+      setStage("");
+      xhrRef.current = null;
+    }
+  };
+
+  const downloadOptimized = async () => {
+    if (!optimizedUrl) return;
+    try {
+      setStage("Preparing download...");
+      const res = await fetch(optimizedUrl);
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const baseName = (file?.name || result?.original_filename || "video").replace(
+        /\.[^.]+$/,
+        "",
+      );
+      const ext = blob.type.includes("webm") ? "webm" : "mp4";
+      a.href = blobUrl;
+      a.download = `${baseName}-compressed.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't download. Opening in a new tab instead.");
+      window.open(optimizedUrl, "_blank");
+    } finally {
       setStage("");
     }
   };
@@ -158,19 +214,104 @@ const VideoCompressor = () => {
   const reset = () => {
     setFile(null);
     setOriginalUrl(null);
-    setOutputUrl(null);
-    setOutputSize(0);
+    setResult(null);
+    setOptimizedUrl(null);
     setProgress(0);
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  const saveSettings = () => {
+    const cleaned: CloudinaryConfig = {
+      cloudName: tempConfig.cloudName.trim(),
+      uploadPreset: tempConfig.uploadPreset.trim(),
+    };
+    if (!cleaned.cloudName || !cleaned.uploadPreset) {
+      toast.error("Both Cloud Name and Upload Preset are required.");
+      return;
+    }
+    setConfig(cleaned);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+    } catch {}
+    setSettingsOpen(false);
+    toast.success("Cloudinary settings saved");
+  };
+
+  const originalSize = file?.size ?? 0;
+  const compressedSize = result?.bytes ?? 0;
   const savings =
-    file && outputSize ? Math.max(0, Math.round((1 - outputSize / file.size) * 100)) : 0;
+    originalSize && compressedSize
+      ? Math.max(0, Math.round((1 - compressedSize / originalSize) * 100))
+      : 0;
 
   return (
     <Layout>
       <div className="container max-w-5xl py-10 md:py-14">
-        <ToolPageHeader title={tool.title} description={tool.description} icon={tool.icon} />
+        <div className="flex items-start justify-between gap-3">
+          <ToolPageHeader title={tool.title} description={tool.description} icon={tool.icon} />
+          <Dialog
+            open={settingsOpen}
+            onOpenChange={(o) => {
+              setSettingsOpen(o);
+              if (o) setTempConfig(config);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="mt-1 shrink-0">
+                <SettingsIcon className="mr-1.5 h-4 w-4" />
+                Settings
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Cloudinary settings</DialogTitle>
+                <DialogDescription>
+                  Stored locally in your browser. Use an{" "}
+                  <span className="font-medium">unsigned</span> upload preset — never paste your API
+                  secret.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cloud-name">Cloud name</Label>
+                  <Input
+                    id="cloud-name"
+                    placeholder="e.g. dxyz123ab"
+                    value={tempConfig.cloudName}
+                    onChange={(e) =>
+                      setTempConfig((c) => ({ ...c, cloudName: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="upload-preset">Upload preset (unsigned)</Label>
+                  <Input
+                    id="upload-preset"
+                    placeholder="e.g. convertify_unsigned"
+                    value={tempConfig.uploadPreset}
+                    onChange={(e) =>
+                      setTempConfig((c) => ({ ...c, uploadPreset: e.target.value }))
+                    }
+                  />
+                </div>
+                <a
+                  href="https://console.cloudinary.com/settings/upload"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                >
+                  Manage upload presets <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setSettingsOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={saveSettings}>Save</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
 
         {!file ? (
           <div
@@ -201,53 +342,14 @@ const VideoCompressor = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">Compression level</label>
-                  <Select value={level} onValueChange={(v) => setLevel(v as Level)} disabled={loading}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low (high quality)</SelectItem>
-                      <SelectItem value="medium">Medium (balanced)</SelectItem>
-                      <SelectItem value="high">High (smallest)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">Resolution</label>
-                  <Select value={resolution} onValueChange={(v) => setResolution(v as Resolution)} disabled={loading}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="original">Original</SelectItem>
-                      <SelectItem value="720">720p</SelectItem>
-                      <SelectItem value="480">480p</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">Output format</label>
-                  <Select value={format} onValueChange={(v) => setFormat(v as Format)} disabled={loading}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mp4">MP4 (H.264)</SelectItem>
-                      <SelectItem value="webm">WebM (VP8)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
             <div className="grid gap-5 md:grid-cols-2">
-              <VideoPanel label="Original" url={originalUrl} size={file.size} />
+              <VideoPanel label="Original" url={originalUrl} size={originalSize} />
               <VideoPanel
                 label="Compressed"
-                url={outputUrl}
-                size={outputSize}
+                url={optimizedUrl}
+                size={compressedSize}
                 loading={loading}
                 savings={savings}
-                downloadUrl={outputUrl}
-                downloadName={outputName}
               />
             </div>
 
@@ -262,26 +364,40 @@ const VideoCompressor = () => {
             )}
 
             <div className="flex flex-wrap gap-2">
+              {!optimizedUrl ? (
+                <Button
+                  onClick={compress}
+                  disabled={loading}
+                  className="gradient-primary text-primary-foreground shadow-glow"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <VideoIcon className="mr-1.5 h-4 w-4" />
+                      Compress video
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={downloadOptimized}
+                  className="gradient-primary text-primary-foreground shadow-glow"
+                >
+                  <Download className="mr-1.5 h-4 w-4" />
+                  Download compressed video
+                </Button>
+              )}
               <Button
-                onClick={compress}
+                variant="outline"
+                onClick={() => inputRef.current?.click()}
                 disabled={loading}
-                className="gradient-primary text-primary-foreground shadow-glow"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                    Compressing...
-                  </>
-                ) : (
-                  <>
-                    <VideoIcon className="mr-1.5 h-4 w-4" />
-                    Compress video
-                  </>
-                )}
-              </Button>
-              <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={loading}>
                 <Upload className="mr-1.5 h-4 w-4" />
-                Choose another
+                Upload another video
               </Button>
               <Button variant="ghost" onClick={reset} disabled={loading}>
                 <Trash2 className="mr-1.5 h-4 w-4" />
@@ -311,16 +427,12 @@ function VideoPanel({
   size,
   loading,
   savings,
-  downloadUrl,
-  downloadName,
 }: {
   label: string;
   url: string | null;
   size: number;
   loading?: boolean;
   savings?: number;
-  downloadUrl?: string | null;
-  downloadName?: string;
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -330,7 +442,9 @@ function VideoPanel({
           <span className="text-xs text-muted-foreground">
             {formatBytes(size)}
             {savings !== undefined && savings > 0 && (
-              <span className="ml-2 rounded-full bg-success/15 px-2 py-0.5 text-success">−{savings}%</span>
+              <span className="ml-2 rounded-full bg-success/15 px-2 py-0.5 text-success">
+                −{savings}%
+              </span>
             )}
           </span>
         )}
@@ -344,16 +458,6 @@ function VideoPanel({
           <p className="text-sm text-muted-foreground">Waiting...</p>
         )}
       </div>
-      {downloadUrl && !loading && (
-        <div className="border-t border-border p-3">
-          <a href={downloadUrl} download={downloadName} className="block">
-            <Button className="w-full gradient-primary text-primary-foreground shadow-glow">
-              <Download className="mr-1.5 h-4 w-4" />
-              Download
-            </Button>
-          </a>
-        </div>
-      )}
     </div>
   );
 }
