@@ -1,6 +1,4 @@
 import { useRef, useState } from "react";
-import mammoth from "mammoth";
-import jsPDF from "jspdf";
 import { Upload, Download, Loader2, FileType2, Trash2 } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { ToolPageHeader } from "@/components/ToolPageHeader";
@@ -9,6 +7,8 @@ import { toast } from "sonner";
 import { tools } from "@/lib/tools";
 
 const tool = tools.find((t) => t.slug === "word-to-pdf")!;
+const MAX_SIZE = 25 * 1024 * 1024; // 25MB
+const FN_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/convert-word-to-pdf`;
 
 const WordToPdf = () => {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -24,46 +24,31 @@ const WordToPdf = () => {
       toast.error("Please upload a .doc or .docx file.");
       return;
     }
+    if (file.size > MAX_SIZE) {
+      toast.error("File too large. Max 25MB.");
+      return;
+    }
     setFileName(file.name);
     setPdfUrl(null);
     setLoading(true);
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const { value: text } = await mammoth.extractRawText({ arrayBuffer });
-
-      if (!text.trim()) {
-        toast.error("Could not read any text from this document.");
-        return;
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(FN_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Conversion failed" }));
+        throw new Error(err.error || "Conversion failed");
       }
-
-      const pdf = new jsPDF({ unit: "pt", format: "a4" });
-      const margin = 48;
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const maxWidth = pageWidth - margin * 2;
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(12);
-
-      const lines = pdf.splitTextToSize(text, maxWidth);
-      let y = margin;
-      const lineHeight = 16;
-
-      for (const line of lines) {
-        if (y + lineHeight > pageHeight - margin) {
-          pdf.addPage();
-          y = margin;
-        }
-        pdf.text(line, margin, y);
-        y += lineHeight;
-      }
-
-      const blob = pdf.output("blob");
+      const blob = await res.blob();
       setPdfUrl(URL.createObjectURL(blob));
       toast.success("PDF ready to download");
     } catch (e) {
       console.error(e);
-      toast.error("Failed to convert. Try a different file.");
+      toast.error((e as Error).message || "Failed to convert. Try a different file.");
     } finally {
       setLoading(false);
     }
@@ -98,7 +83,7 @@ const WordToPdf = () => {
             </span>
             <div>
               <p className="text-base font-semibold">Drop a Word file or click to upload</p>
-              <p className="text-sm text-muted-foreground">.doc or .docx — converted in your browser</p>
+              <p className="text-sm text-muted-foreground">.doc or .docx — preserves original formatting (max 25MB)</p>
             </div>
             <input
               ref={inputRef}
@@ -120,7 +105,7 @@ const WordToPdf = () => {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{fileName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {loading ? "Converting to PDF..." : pdfUrl ? "Conversion complete" : "Ready"}
+                  {loading ? "Converting on server (preserving formatting)..." : pdfUrl ? "Conversion complete" : "Ready"}
                 </p>
               </div>
             </div>
@@ -140,11 +125,11 @@ const WordToPdf = () => {
                   Converting...
                 </Button>
               )}
-              <Button variant="outline" onClick={() => inputRef.current?.click()}>
+              <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={loading}>
                 <Upload className="mr-1.5 h-4 w-4" />
                 Choose another
               </Button>
-              <Button variant="ghost" onClick={reset}>
+              <Button variant="ghost" onClick={reset} disabled={loading}>
                 <Trash2 className="mr-1.5 h-4 w-4" />
                 Reset
               </Button>
@@ -161,8 +146,7 @@ const WordToPdf = () => {
             </div>
 
             <p className="mt-4 text-xs text-muted-foreground">
-              Note: Conversion preserves text content. Complex formatting, images, and tables may
-              not be retained.
+              Conversion runs on our server using LibreOffice for high-fidelity output (fonts, tables, images, layout).
             </p>
           </div>
         )}
