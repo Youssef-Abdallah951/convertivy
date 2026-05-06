@@ -46,14 +46,6 @@ export const tools: Tool[] = [
     keywords: ["image", "compress", "optimize", "photo", "size"],
   },
   {
-    slug: "word-to-pdf",
-    title: "Word to PDF",
-    description: "Convert .doc or .docx documents to a polished PDF in seconds.",
-    icon: FileType2,
-    category: "Files",
-    keywords: ["word", "docx", "pdf", "convert", "document"],
-  },
-  {
     slug: "file-to-qr",
     title: "File to QR Code",
     description: "Upload any file and get a scannable QR code that links to it.",
