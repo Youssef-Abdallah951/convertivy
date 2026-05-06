@@ -2,7 +2,7 @@ import {
   Braces,
   Sparkles,
   Image as ImageIcon,
-  FileType2,
+  
   QrCode,
   Link2,
   Download,
