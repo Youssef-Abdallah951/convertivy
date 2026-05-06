@@ -2,7 +2,7 @@ import {
   Braces,
   Sparkles,
   Image as ImageIcon,
-  FileType2,
+  
   QrCode,
   Link2,
   Download,
@@ -44,14 +44,6 @@ export const tools: Tool[] = [
     icon: ImageIcon,
     category: "Media",
     keywords: ["image", "compress", "optimize", "photo", "size"],
-  },
-  {
-    slug: "word-to-pdf",
-    title: "Word to PDF",
-    description: "Convert .doc or .docx documents to a polished PDF in seconds.",
-    icon: FileType2,
-    category: "Files",
-    keywords: ["word", "docx", "pdf", "convert", "document"],
   },
   {
     slug: "file-to-qr",
