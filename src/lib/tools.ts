@@ -86,4 +86,12 @@ export const tools: Tool[] = [
     category: "Utilities",
     keywords: ["unit", "converter", "length", "weight", "temperature", "time", "speed", "data", "measurement"],
   },
+  {
+    slug: "ai-checker",
+    title: "AI Checker & Humanizer",
+    description: "Detect AI-generated text and rewrite it to sound more natural and human.",
+    icon: Bot,
+    category: "AI",
+    keywords: ["ai", "detector", "humanizer", "checker", "rewrite", "gpt", "plagiarism"],
+  },
 ];
