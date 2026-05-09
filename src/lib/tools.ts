@@ -86,4 +86,12 @@ export const tools: Tool[] = [
     category: "Utilities",
     keywords: ["unit", "converter", "length", "weight", "temperature", "time", "speed", "data", "measurement"],
   },
+  {
+    slug: "study-timer",
+    title: "Study Timer (Pomodoro)",
+    description: "Fully customizable focus and break timer with stats, sound, and notifications.",
+    icon: Timer,
+    category: "Utilities",
+    keywords: ["pomodoro", "study", "timer", "focus", "break", "productivity"],
+  },
 ];
