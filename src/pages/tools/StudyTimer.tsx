@@ -313,7 +313,7 @@ const StudyTimer = () => {
 
       <div
         className="relative mx-auto aspect-square w-full"
-        style={{ maxWidth: "min(82vw, 380px)" }}
+        style={{ maxWidth: "min(82vw, 380px)", containerType: "inline-size" }}
       >
         <svg viewBox="0 0 300 300" className="h-full w-full -rotate-90" preserveAspectRatio="xMidYMid meet">
           <circle cx="150" cy="150" r={radius} className="fill-none stroke-muted" strokeWidth="14" />
