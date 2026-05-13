@@ -311,8 +311,11 @@ const StudyTimer = () => {
         ))}
       </div>
 
-      <div className="relative aspect-square w-full max-w-[min(80vw,360px)]">
-        <svg viewBox="0 0 300 300" className="h-full w-full -rotate-90">
+      <div
+        className="relative mx-auto aspect-square w-full"
+        style={{ maxWidth: "min(82vw, 380px)" }}
+      >
+        <svg viewBox="0 0 300 300" className="h-full w-full -rotate-90" preserveAspectRatio="xMidYMid meet">
           <circle cx="150" cy="150" r={radius} className="fill-none stroke-muted" strokeWidth="14" />
           <circle
             cx="150"
@@ -325,10 +328,26 @@ const StudyTimer = () => {
             strokeDashoffset={dashOffset}
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground sm:text-xs">{modeLabel}</span>
-          <span className="mt-2 font-mono text-4xl font-bold tabular-nums sm:text-5xl md:text-6xl">{fmt(remaining)}</span>
-          <span className="mt-2 text-[11px] text-muted-foreground sm:text-xs">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
+          <span
+            className="uppercase tracking-widest text-muted-foreground"
+            style={{ fontSize: "clamp(0.625rem, 1.6cqw + 0.5rem, 0.875rem)" }}
+          >
+            {modeLabel}
+          </span>
+          <span
+            className="mt-2 font-mono font-bold tabular-nums leading-none"
+            style={{
+              fontSize: "clamp(2rem, 14cqw, 4.5rem)",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {fmt(remaining)}
+          </span>
+          <span
+            className="mt-2 text-muted-foreground"
+            style={{ fontSize: "clamp(0.625rem, 1.6cqw + 0.5rem, 0.875rem)" }}
+          >
             Session {state.completedInCycle + 1} · {Math.round(progress * 100)}%
           </span>
         </div>
