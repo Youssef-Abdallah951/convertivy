@@ -17,7 +17,6 @@ export function Navbar() {
         <nav className="hidden items-center gap-1 md:flex">
           {[
             { to: "/", label: "Home" },
-            { to: "/tools/text-summarizer", label: "AI Summarizer" },
             { to: "/tools/file-to-qr", label: "File → QR" },
           ].map((l) => (
             <NavLink

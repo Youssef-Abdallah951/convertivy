@@ -1,6 +1,5 @@
 import {
   Braces,
-  Sparkles,
   Image as ImageIcon,
   
   QrCode,
@@ -29,14 +28,6 @@ export const tools: Tool[] = [
     icon: Braces,
     category: "Developer",
     keywords: ["json", "format", "validate", "developer", "api"],
-  },
-  {
-    slug: "text-summarizer",
-    title: "AI Text Summarizer",
-    description: "Turn long passages into concise summaries with AI.",
-    icon: Sparkles,
-    category: "AI",
-    keywords: ["summary", "ai", "text", "tldr", "shorten"],
   },
   {
     slug: "image-compressor",
